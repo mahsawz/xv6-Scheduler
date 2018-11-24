@@ -6,12 +6,14 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "countTable.h"
 
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
 } ptable;
-
+struct countTable cT;
+struct spinlock sl;
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -531,4 +533,17 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int counts(struct countTable *ct){
+	for (int i=0; i<22; i++){
+		ct->counts[i] = cT.counts[i];
+	}
+	return 0;
+}
+
+void incer(int sys_num) {
+	acquire(&sl);
+	cT.counts[sys_num - 1]++;
+	release(&sl);
 }
