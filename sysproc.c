@@ -89,3 +89,11 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int
+sys_counts() {
+    struct countTable *ct;
+    if (argptr(0, (void *) &ct, sizeof(ct)) < 0)
+        return -1;
+    return counts(ct);
+}
