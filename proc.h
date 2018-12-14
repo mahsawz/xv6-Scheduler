@@ -1,3 +1,9 @@
+#include "spinlock.h"
+// Segments in proc->gdt.
+#define NSEGS     7
+// there are 3 queues-0,1,2
+#define PRIORITY_MAX 2 
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -8,10 +14,22 @@ struct cpu {
   int ncli;                    // Depth of pushcli nesting.
   int intena;                  // Were interrupts enabled before pushcli?
   struct proc *proc;           // The process running on this cpu or null
+  struct cpu *cpu;             // Cpu-local storage variables; see below
 };
 
 extern struct cpu cpus[NCPU];
 extern int ncpu;
+
+// Per-CPU variables, holding pointers to the
+// current cpu and to the current process.
+// The asm suffix tells gcc to use "%gs:0" to refer to cpu
+// and "%gs:4" to refer to proc.  seginit sets up the
+// %gs segment register so that %gs refers to the memory
+// holding those two variables in the local cpu's struct cpu.
+// This is similar to how thread-local variables are implemented
+// in thread libraries such as Linux pthreads.
+extern struct cpu *cpu asm("%gs:0");       // &cpus[cpunum()]
+extern struct proc *proc asm("%gs:4");     // cpus[cpunum()].proc
 
 //PAGEBREAK: 17
 // Saved registers for kernel context switches.
@@ -41,6 +59,7 @@ struct proc {
   char *kstack;                // Bottom of kernel stack for this process
   enum procstate state;        // Process state
   int pid;                     // Process ID
+  int priority;                // added for Muti-leve feedback Queue
   struct proc *parent;         // Parent process
   struct trapframe *tf;        // Trap frame for current syscall
   struct context *context;     // swtch() here to run process
@@ -50,6 +69,15 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 };
+
+struct {
+  struct spinlock lock;
+  struct proc proc[NPROC];
+  // Three queues, associating with each priority level
+  struct proc* que[3][NPROC];
+  //three numbers, associating with the number of processes in each queue
+  int priCount[3];
+}ptable;
 
 // Process memory is laid out contiguously, low addresses first:
 //   text
