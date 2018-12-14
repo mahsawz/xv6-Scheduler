@@ -140,16 +140,9 @@ userinit(void)
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
-
-  // this assignment to p->state lets other cores
-  // run this process. the acquire forces the above
-  // writes to be visible, and the lock is also needed
-  // because the assignment might not be atomic.
-  acquire(&ptable.lock);
-
+  ptable.priCount[0]++;
+  ptable.que[0][ptable.priCount[0]] = p;
   p->state = RUNNABLE;
-
-  release(&ptable.lock);
 }
 
 // Grow current process's memory by n bytes.
