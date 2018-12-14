@@ -8,12 +8,6 @@
 #include "spinlock.h"
 #include "countTable.h"
 
-struct {
-  struct spinlock lock;
-  struct proc proc[NPROC];
-} ptable;
-struct countTable cT;
-struct spinlock sl;
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -26,6 +20,9 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  ptable.priCount[0] = -1;
+  ptable.priCount[1] = -1;
+  ptable.priCount[2] = -1;
 }
 
 // Must be called with interrupts disabled
