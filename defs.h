@@ -123,6 +123,7 @@ void            wakeup(void*);
 void            yield(void);
 int		        counts(struct countTable*);
 void		    incer(int);
+int waitx(int *,int *);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
