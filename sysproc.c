@@ -97,3 +97,18 @@ sys_counts() {
         return -1;
     return counts(ct);
 }
+
+int 
+sys_waitx(void)
+{
+  int *wtime;
+  int *rtime;
+  
+  if(argptr(0, (char**)&wtime, sizeof(int)) < 0)
+    return 12;
+
+  if(argptr(1, (char**)&rtime, sizeof(int)) < 0)
+    return 13;
+
+  return waitx(wtime,rtime);
+}
